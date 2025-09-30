@@ -1,4 +1,6 @@
 #include "gestor_turnos.h"
+#include <string>
+#include <iostream>
 
 GestorTurnos::GestorTurnos() : turno(0) {}
 
@@ -31,79 +33,83 @@ void GestorTurnos::jugar(Jugador& j1, Jugador& j2) {
     bool sigueTurno = true;
     std::string comando;
     
-    std::cout << "\n╔════════════════════════════════════╗\n";
-    std::cout << "║    ¡LA BATALLA HA COMENZADO!      ║\n";
-    std::cout << "╚════════════════════════════════════╝\n";
-    std::cout << "\nComandos durante el juego:\n";
-    std::cout << "  - Ingresa coordenadas (x y) para disparar\n";
-    std::cout << "  - Escribe 'guardar' para guardar y salir al menú\n";
-    std::cout << "  - Escribe 'rendirse' para abandonar la partida\n\n";
+    std::cout << "\n===========================================\n";
+    std::cout << "    ¡LA BATALLA HA COMENZADO!\n";
+    std::cout << "===========================================\n";
+    std::cout << "\nINSTRUCCIONES:\n";
+    std::cout << "  - Para disparar: ingresa coordenadas (x y)\n";
+    std::cout << "  - Para GUARDAR y salir: escribe 'g'\n";
+    std::cout << "  - Para rendirse: escribe 'r'\n\n";
     
     while (true) {
         // Verificar si algún jugador perdió todos sus barcos
         if (j1.tablero.barcosRestantes() == 0) {
-            std::cout << "\n╔════════════════════════════════════╗\n";
-            std::cout << "║  🏆 " << j2.nombre << " HA GANADO! 🏆\n";
-            std::cout << "╚════════════════════════════════════╝\n";
-            std::cout << "¡Todos los barcos de " << j1.nombre << " fueron hundidos!\n\n";
+            std::cout << "\n===========================================\n";
+            std::cout << "  " << j2.nombre << " HA GANADO!\n";
+            std::cout << "===========================================\n";
+            std::cout << "Todos los barcos de " << j1.nombre << " fueron hundidos!\n\n";
             break;
         }
         if (j2.tablero.barcosRestantes() == 0) {
-            std::cout << "\n╔════════════════════════════════════╗\n";
-            std::cout << "║  🏆 " << j1.nombre << " HA GANADO! 🏆\n";
-            std::cout << "╚════════════════════════════════════╝\n";
-            std::cout << "¡Todos los barcos de " << j2.nombre << " fueron hundidos!\n\n";
+            std::cout << "\n===========================================\n";
+            std::cout << "  " << j1.nombre << " HA GANADO!\n";
+            std::cout << "===========================================\n";
+            std::cout << "Todos los barcos de " << j2.nombre << " fueron hundidos!\n\n";
             break;
         }
         
         // Turno del jugador actual
         if (turno == 0) {
-            std::cout << "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
-            std::cout << "Turno de: " << j1.nombre << " ⚓\n";
+            std::cout << "\n-------------------------------------------\n";
+            std::cout << "Turno de: " << j1.nombre << "\n";
             std::cout << "Barcos enemigos restantes: " << j2.tablero.barcosRestantes() << "\n";
-            std::cout << "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n";
+            std::cout << "-------------------------------------------\n\n";
             
             std::cout << "Tablero enemigo:\n";
             j2.tablero.Mostrar();
             
-            std::cout << j1.nombre << ", ¿qué deseas hacer?\n";
-            std::cout << "Opciones: disparar (x y) | 'guardar' | 'rendirse'\n";
-            std::cout << "Ingresa tu comando: ";
-            
+            std::cout << j1.nombre << ", tu turno (x y / g=guardar / r=rendirse): ";
             std::cin >> comando;
             
-            // Verificar si es un comando especial
-            if (comando == "guardar" || comando == "GUARDAR") {
-                std::cout << "\nRegresando al menú principal para guardar...\n";
-                return; // Salir del método jugar() para volver al menú
+            // Verificar comandos especiales
+            if (comando == "g" || comando == "G" || comando == "guardar" || comando == "GUARDAR") {
+                std::cout << "\n[INFO] Saliendo al menú para guardar...\n";
+                std::cout << "[INFO] Selecciona opción 3 en el menú para guardar la partida.\n";
+                return; // Salir del juego y volver al menú
             }
-            else if (comando == "rendirse" || comando == "RENDIRSE") {
+            else if (comando == "r" || comando == "R" || comando == "rendirse" || comando == "RENDIRSE") {
                 std::cout << "\n" << j1.nombre << " se ha rendido.\n";
-                std::cout << "🏆 " << j2.nombre << " GANA POR RENDICIÓN! 🏆\n\n";
+                std::cout << j2.nombre << " GANA POR RENDICIÓN!\n\n";
                 return;
             }
             else {
-                // Intentar leer como coordenadas
+                // Intentar parsear coordenadas
                 int x, y;
                 try {
                     x = std::stoi(comando);
-                    std::cin >> y;
+                    if (!(std::cin >> y)) {
+                        std::cout << "Entrada inválida. Pierdes el turno.\n";
+                        std::cin.clear();
+                        std::cin.ignore(10000, '\n');
+                        turno = 1;
+                        continue;
+                    }
                     
                     if (x < 0 || x >= 20 || y < 0 || y >= 20) {
-                        std::cout << "Coordenadas fuera de rango. Pierdes el turno.\n";
+                        std::cout << "Coordenadas fuera de rango (0-19). Pierdes el turno.\n";
                         sigueTurno = false;
                     } else {
                         Casilla& objetivo = j2.tablero.Core[x][y];
                         if (objetivo.getEstado() == 2) {
                             objetivo.MarcarImpacto();
-                            std::cout << "\n💥 ¡IMPACTO EN BARCO ENEMIGO! 💥\n";
+                            std::cout << "\n¡IMPACTO EN BARCO ENEMIGO!\n";
                             sigueTurno = true;
                         } else if (objetivo.getEstado() == 3) {
                             objetivo.MarcarSinImpacto();
-                            std::cout << "\n💧 Disparo al agua...\n";
+                            std::cout << "\nDisparo al agua...\n";
                             sigueTurno = false;
                         } else {
-                            std::cout << "\n⚠️ Ya disparaste en esta posición. Pierdes el turno.\n";
+                            std::cout << "\nYa disparaste aquí. Pierdes el turno.\n";
                             sigueTurno = false;
                         }
                     }
@@ -118,52 +124,55 @@ void GestorTurnos::jugar(Jugador& j1, Jugador& j2) {
             if (!sigueTurno) turno = 1;
             
         } else {
-            std::cout << "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
-            std::cout << "Turno de: " << j2.nombre << " ⚓\n";
+            // Turno del jugador 2 (igual lógica)
+            std::cout << "\n-------------------------------------------\n";
+            std::cout << "Turno de: " << j2.nombre << "\n";
             std::cout << "Barcos enemigos restantes: " << j1.tablero.barcosRestantes() << "\n";
-            std::cout << "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n";
+            std::cout << "-------------------------------------------\n\n";
             
             std::cout << "Tablero enemigo:\n";
             j1.tablero.Mostrar();
             
-            std::cout << j2.nombre << ", ¿qué deseas hacer?\n";
-            std::cout << "Opciones: disparar (x y) | 'guardar' | 'rendirse'\n";
-            std::cout << "Ingresa tu comando: ";
-            
+            std::cout << j2.nombre << ", tu turno (x y / g=guardar / r=rendirse): ";
             std::cin >> comando;
             
-            // Verificar si es un comando especial
-            if (comando == "guardar" || comando == "GUARDAR") {
-                std::cout << "\nRegresando al menú principal para guardar...\n";
-                return; // Salir del método jugar() para volver al menú
+            if (comando == "g" || comando == "G" || comando == "guardar" || comando == "GUARDAR") {
+                std::cout << "\n[INFO] Saliendo al menú para guardar...\n";
+                std::cout << "[INFO] Selecciona opción 3 en el menú para guardar la partida.\n";
+                return;
             }
-            else if (comando == "rendirse" || comando == "RENDIRSE") {
+            else if (comando == "r" || comando == "R" || comando == "rendirse" || comando == "RENDIRSE") {
                 std::cout << "\n" << j2.nombre << " se ha rendido.\n";
-                std::cout << "🏆 " << j1.nombre << " GANA POR RENDICIÓN! 🏆\n\n";
+                std::cout << j1.nombre << " GANA POR RENDICIÓN!\n\n";
                 return;
             }
             else {
-                // Intentar leer como coordenadas
                 int x, y;
                 try {
                     x = std::stoi(comando);
-                    std::cin >> y;
+                    if (!(std::cin >> y)) {
+                        std::cout << "Entrada inválida. Pierdes el turno.\n";
+                        std::cin.clear();
+                        std::cin.ignore(10000, '\n');
+                        turno = 0;
+                        continue;
+                    }
                     
                     if (x < 0 || x >= 20 || y < 0 || y >= 20) {
-                        std::cout << "Coordenadas fuera de rango. Pierdes el turno.\n";
+                        std::cout << "Coordenadas fuera de rango (0-19). Pierdes el turno.\n";
                         sigueTurno = false;
                     } else {
                         Casilla& objetivo = j1.tablero.Core[x][y];
                         if (objetivo.getEstado() == 2) {
                             objetivo.MarcarImpacto();
-                            std::cout << "\n💥 ¡IMPACTO EN BARCO ENEMIGO! 💥\n";
+                            std::cout << "\n¡IMPACTO EN BARCO ENEMIGO!\n";
                             sigueTurno = true;
                         } else if (objetivo.getEstado() == 3) {
                             objetivo.MarcarSinImpacto();
-                            std::cout << "\n💧 Disparo al agua...\n";
+                            std::cout << "\nDisparo al agua...\n";
                             sigueTurno = false;
                         } else {
-                            std::cout << "\n⚠️ Ya disparaste en esta posición. Pierdes el turno.\n";
+                            std::cout << "\nYa disparaste aquí. Pierdes el turno.\n";
                             sigueTurno = false;
                         }
                     }
@@ -177,10 +186,5 @@ void GestorTurnos::jugar(Jugador& j1, Jugador& j2) {
             
             if (!sigueTurno) turno = 0;
         }
-        
-        // Pausa para leer el resultado
-        std::cout << "\nPresiona Enter para continuar...";
-        std::cin.ignore(10000, '\n');
-        std::cin.get();
     }
 }
